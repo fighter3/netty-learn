@@ -1,0 +1,38 @@
+### Java ###
+/bin/
+/target/
+**/*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.log
+.idea
+.project
+.settings/
+src/test/java/
+src/main/java/**/*.log
+### Vue.js ###
+# Compiled output
+/dist/
+/tmp/
+# Operating System Files
+.DS_Store
+# Cache files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test/unit/coverage/
+test/e2e/reports/
+# Log files
+log/
+logs/
+*.log
+
+# Others
+*.swp
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+node_modules
