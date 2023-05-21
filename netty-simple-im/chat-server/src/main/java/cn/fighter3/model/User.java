@@ -1,16 +1,33 @@
 package cn.fighter3.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * <p>Date: 2023/5/16 1:34</p>
  * <p>Author: fighter3</p>
- * <p>Description: 类描述</p>
+ * <p>Description: 用户实体类</p>
  */
 @Data
-public class User {
-    private static final long serialVersionUID = -1L;
+@AllArgsConstructor
+public class User implements Serializable {
 
-    private String id;
+    /**
+     * 用户id
+     */
+    private String userId;
+    /**
+     * 用户名
+     */
     private String username;
+    /**
+     * 密码
+     */
+    private String password;
+    /**
+     * 昵称
+     */
+    private String nickname;
 }
