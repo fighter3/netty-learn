@@ -1,7 +1,7 @@
 <template>
     <div class="login">
         <h1 class="title">即时通讯</h1>
-        <el-form class="form" :model="form" :rules="rules" ref="form" @click="handleLogin">
+        <el-form class="form" :model="form" :rules="rules" ref="form">
             <el-form-item prop="username">
                 <el-input v-model="form.username" placeholder="请输入用户名"></el-input>
             </el-form-item>
@@ -9,7 +9,7 @@
                 <el-input type="password" v-model="form.password" placeholder="请输入密码"></el-input>
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" native-type="submit">登录</el-button>
+                <el-button type="primary" native-type="submit" @click="handleLogin">登录</el-button>
             </el-form-item>
         </el-form>
     </div>
@@ -39,13 +39,15 @@ export default {
                 if (valid) {
                     const { username, password } = this.form;
                     axios
-                        .post("/api/login", { username, password })
+                        .post("/im/user/login", { username, password })
                         .then((response) => {
                             // 登录成功，保存token和用户信息到localStorage中
                             localStorage.setItem("token", response.data.token);
+                            console.log(localStorage.getItem("token"))
                             localStorage.setItem("user", JSON.stringify(response.data.user));
-                            // 跳转到主页面
-                            this.$router.push("/main");
+                            console.log("login response:" + JSON.stringify(response))
+                            // 跳转到主页
+                            this.$router.push({ name: 'main' })
                         })
                         .catch((error) => {
                             // 处理登录失败的情况

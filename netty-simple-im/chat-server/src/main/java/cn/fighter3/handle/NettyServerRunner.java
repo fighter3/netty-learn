@@ -46,8 +46,8 @@ public class NettyServerRunner implements CommandLineRunner {
                             ChannelPipeline pipeline = socketChannel.pipeline();
                             pipeline.addLast(new HttpServerCodec());
                             pipeline.addLast(new HttpObjectAggregator(65536));
-                            pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
                             pipeline.addLast(webSocketChannelHandler);
+                            pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
                         }
                     });
             ChannelFuture channelFuture = serverBootstrap.bind(port).sync();

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Slf4j
 public class ChatServiceImpl implements ChatService {
+    @Resource
+    private UserManager userManager;
+    @Resource
+    private ChannelManager channelManager;
 
     @Override
     public void handleMessage(Channel channel, Message message) {
@@ -52,14 +57,9 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     public void handleOnlineMessage(Channel channel, Message message) {
-        //判断这个用户是不是已经上线
-        if (ChannelManager.getChannel(message.getFromUserId())!=null){
-            log.info("[handleOnlineMessage] user:{} is already online",message.getFromUserId());
-            return;
-        }
         //上线
-        ChannelManager.addChannel(message.getFromUserId(),channel);
-        User user= UserManager.getUserById(message.getFromUserId());
+        channelManager.addChannel(message.getFromUserId(),channel);
+        User user= userManager.getUserById(message.getFromUserId());
         String hello="欢迎"+user.getNickname()+"上线";
         channel.writeAndFlush(new TextWebSocketFrame(hello));
     }
@@ -69,7 +69,7 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     public void handleOfflineMessage(Channel channel, Message message) {
-        ChannelManager.removeChannel(message.getFromUserId());
+        channelManager.removeChannel(message.getFromUserId());
     }
 
     /**
@@ -77,7 +77,7 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     public void handleSingleChat(Channel channel,Message message) {
-        Channel toChannel=ChannelManager.getChannel(message.getToUserId());
+        Channel toChannel=channelManager.getChannel(message.getToUserId());
         if (toChannel==null){
             log.error("[handleSingleChat] toUserId:{} can not find channel.",message.getToUserId());
             channel.writeAndFlush(new TextWebSocketFrame("该用户已下线"));
@@ -91,7 +91,7 @@ public class ChatServiceImpl implements ChatService {
      */
     @Override
     public void handleGroupChat(Channel channel, Message message) {
-        for (Channel toChannel:ChannelManager.getOtherChannels(message.getFromUserId())){
+        for (Channel toChannel:channelManager.getOtherChannels(message.getFromUserId())){
             toChannel.writeAndFlush(new TextWebSocketFrame(message.getContent()));
         }
     }

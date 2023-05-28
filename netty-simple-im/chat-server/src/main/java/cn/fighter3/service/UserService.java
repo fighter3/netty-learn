@@ -6,6 +6,7 @@ import cn.fighter3.model.User;
 import io.netty.channel.ChannelHandlerContext;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,4 +21,13 @@ public interface UserService {
      */
      LoginResponse login(LoginRequest request) ;
 
+    /**
+     * 用户退出
+     */
+    void logout(String token);
+
+    /**
+     * 获取好友列表
+     */
+    List<User> getFriends(String token);
 }

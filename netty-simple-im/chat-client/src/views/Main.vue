@@ -11,11 +11,7 @@
           <el-tab-pane label="好友列表" name="1">
             <el-scrollbar>
               <ul class="user-list">
-                <li
-                  v-for="(friend, index) in friendList"
-                  :key="index"
-                  @click="handleFriendClick(friend.username)"
-                >
+                <li v-for="(friend, index) in friendList" :key="index" @click="handleFriendClick(friend.username)">
                   <div class="avatar">
                     <el-image :src="friend.avatar" fit="cover" alt="头像" />
                   </div>
@@ -27,51 +23,20 @@
               </ul>
             </el-scrollbar>
           </el-tab-pane>
-          <el-tab-pane label="群组列表" name="2">
-            <el-scrollbar>
-              <ul class="group-list">
-                <li
-                  v-for="(group, index) in groupList"
-                  :key="index"
-                  @click="handleGroupClick(group.id)"
-                >
-                  <div class="avatar">
-                    <el-image :src="group.avatar" fit="cover" alt="头像" />
-                  </div>
-                  <div class="info">
-                    <div class="name">{{ group.name }}</div>
-                    <div class="id">{{ group.id }}</div>
-                  </div>
-                </li>
-              </ul>
-            </el-scrollbar>
-          </el-tab-pane>
         </el-tabs>
       </div>
       <div class="content">
         <el-tabs v-model="activeChat">
-          <el-tab-pane
-            v-for="(chat, index) in chatList"
-            :key="index"
-            :label="
-              chat.type === 'private' ? chat.user.nickname : chat.group.name
-            "
-            :name="chat.id"
-          >
+          <el-tab-pane v-for="(chat, index) in chatList" :key="index" :label="
+            chat.type === 'private' ? chat.user.nickname : chat.group.name
+          " :name="chat.id">
             <div class="chat-box">
               <el-scrollbar>
                 <ul class="chat-message-list">
-                  <li
-                    v-for="(message, index) in chat.messageList"
-                    :key="index"
-                    :class="{ self: message.senderId === user.id }"
-                  >
+                  <li v-for="(message, index) in chat.messageList" :key="index"
+                    :class="{ self: message.senderId === user.id }">
                     <div class="avatar">
-                      <el-image
-                        :src="message.senderAvatar"
-                        fit="cover"
-                        alt="头像"
-                      />
+                      <el-image :src="message.senderAvatar" fit="cover" alt="头像" />
                     </div>
                     <div class="message-content">
                       <div class="sender-info">
@@ -84,17 +49,8 @@
                 </ul>
               </el-scrollbar>
               <div class="chat-input-box">
-                <el-input
-                  v-model="chatInput"
-                  placeholder="请输入消息"
-                  clearable
-                ></el-input>
-                <el-button
-                  class="send-btn"
-                  type="primary"
-                  @click="handleSend(chat)"
-                  >发送</el-button
-                >
+                <el-input v-model="chatInput" placeholder="请输入消息" clearable></el-input>
+                <el-button class="send-btn" type="primary" @click="handleSend(chat)">发送</el-button>
               </div>
             </div>
           </el-tab-pane>
@@ -113,7 +69,7 @@ export default {
     return {
       user: JSON.parse(localStorage.getItem("user")),
       friendList: [],
-      groupList: [],
+      //groupList: [],
       chatList: [],
       activeTab: "1",
       activeChat: "",
@@ -126,37 +82,57 @@ export default {
   },
   mounted() {
     this.friendListRef = this.$refs.friendListRef;
-    this.groupListRef = this.$refs.groupListRef;
+    //this.groupListRef = this.$refs.groupListRef;
     this.chatListRef = this.$refs.chatListRef;
     this.getFriendList();
-    this.getGroupList();
+    //this.getGroupList();
     this.connectSocket();
   },
   methods: {
     // 建立Socket长连接
     connectSocket() {
-      const token = localStorage.getItem("token");
-      if (token && !this.socket) {
-        this.socket = io("/", {
-          auth: { token },
-        });
-        // 监听连接成功事件
-        this.socket.on("connect", () => {
-          console.log("Socket已连接");
-        });
-        // 监听新消息事件
-        this.socket.on("message", this.handleNewMessage);
+      try {
+        const token = localStorage.getItem("token");
+        if (token && !this.socket) {
+          this.socket = io("localhost:8886/ws", {
+            transports: ["websocket"],
+            timeout: 5000000,
+            auth: { token }
+          });
+          // 监听连接成功事件
+          this.socket.on("connect", () => {
+            console.log("Socket已连接");
+          }).on("connect_error", error => {
+            console.error("Socket连接错误：", error);
+            // 重连
+            setTimeout(() => {
+              this.socket.connect();
+            }, 1000);
+          });
+          console.log("连接============")
+          // 监听新消息事件
+          //this.socket.on("message", this.handleNewMessage);
+        }
+      } catch (error) {
+        console.error("连接Socket时出现异常：", error);
       }
     },
     // 获取好友列表
     getFriendList() {
       axios
-        .get("/api/friends")
+        .get("/im/user/friends", {
+          headers: {
+            "token": localStorage.getItem("token")
+          }
+        })
         .then((response) => {
           this.friendList = response.data;
-          this.$nextTick(() => {
-            this.friendListRef.update();
-          });
+          if (response.data) {
+            this.$nextTick(() => {
+              this.friendListRef.update();
+            });
+          }
+
         })
         .catch((error) => {
           console.error(error);
@@ -214,10 +190,12 @@ export default {
   justify-content: center;
   height: 100vh;
 }
+
 .title {
   font-size: 36px;
   margin-bottom: 50px;
 }
+
 .container {
   display: flex;
   flex-direction: row;
@@ -226,10 +204,12 @@ export default {
   width: 1200px;
   height: 600px;
 }
+
 .sidebar {
   width: 300px;
   height: 100%;
 }
+
 .user-profile {
   display: flex;
   flex-direction: column;
@@ -239,21 +219,25 @@ export default {
   padding: 20px;
   background-color: #f2f6fc;
 }
+
 .user-profile img {
   width: 80px;
   height: 80px;
   border-radius: 50%;
 }
+
 .user-profile span {
   margin-top: 10px;
   font-size: 16px;
 }
+
 .user-list,
 .group-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
+
 .user-list li,
 .group-list li {
   display: flex;
@@ -263,10 +247,12 @@ export default {
   padding: 10px;
   cursor: pointer;
 }
+
 .user-list li:hover,
 .group-list li:hover {
   background-color: #f2f6fc;
 }
+
 .avatar {
   width: 40px;
   height: 40px;
@@ -274,50 +260,60 @@ export default {
   overflow: hidden;
   margin-right: 10px;
 }
+
 .avatar img {
   width: 100%;
 }
+
 .info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
 }
+
 .nickname {
   font-size: 16px;
   font-weight: bold;
 }
+
 .username {
   font-size: 14px;
   color: #999;
 }
+
 .content {
   flex: 1;
   height: 100%;
   padding: 20px;
   border-left: 1px solid #e6e6e6;
 }
+
 .chat-box {
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+
 .chat-message-list {
   list-style: none;
   margin: 0;
   padding: 0;
   overflow-y: auto;
 }
+
 .chat-message-list li {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   margin-bottom: 10px;
 }
+
 .chat-message-list li.self {
   justify-content: flex-end;
 }
+
 .avatar {
   width: 40px;
   height: 40px;
@@ -325,9 +321,11 @@ export default {
   overflow: hidden;
   margin-right: 10px;
 }
+
 .avatar img {
   width: 100%;
 }
+
 .message-content {
   display: flex;
   flex-direction: column;
@@ -337,25 +335,30 @@ export default {
   border-radius: 5px;
   padding: 10px;
 }
+
 .sender-info {
   display: flex;
   flex-direction: row;
   align-items: center;
   margin-bottom: 5px;
 }
+
 .nickname {
   font-size: 14px;
   font-weight: bold;
   margin-right: 10px;
 }
+
 .time {
   font-size: 12px;
   color: #999;
 }
+
 .content {
   font-size: 14px;
   margin-top: 5px;
 }
+
 .chat-input-box {
   display: flex;
   flex-direction: row;
@@ -363,10 +366,12 @@ export default {
   justify-content: space-between;
   margin-top: 10px;
 }
+
 .el-input {
   flex: 1;
   margin-right: 10px;
 }
+
 .send-btn {
   width: 80px;
 }
