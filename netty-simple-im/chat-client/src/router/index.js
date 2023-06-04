@@ -10,7 +10,7 @@ const routes = [
     component: LoginView
   },
   {
-    path: '/m',
+    path: '/',
     name: 'main',
     component: MainView,
     meta: {
@@ -18,7 +18,7 @@ const routes = [
     }
   },
   {
-    path: '/',
+    path: '/m',
     name: 'main-test',
     component: MainTest,
     meta: {
@@ -33,26 +33,26 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token') // 判断用户是否已经登录
-  if (to.matched.some(record => record.meta.requireAuth)) { // 如果访问需要登录才能访问的页面，但是用户没有登录
-    console.log('token:', token)
-    console.log('to:', to)
-    console.log('from:', from)
-    if (!token) { // 跳转到登录页
-      console.log("redirect to login")
-      next({ path: '/login' })
-    } else if (to.path === '/login') {
-      //用户已经登录，但是还跳转登录页
-      next({ path: '/' })
-    } else {
-      console.log("next,to:", to)
-      // 否则放行
-      next()
-    }
-  } else { // 其他情况均放行
-    next()
+  const token = localStorage.getItem("token"); // 判断用户是否已经登录
+  const requireAuth = to.meta.requireAuth; // 判断目标路由是否需要登录才能访问
+  console.log("token:", token);
+  console.log("requireAuth:", requireAuth);
+  console.log("to:", to);
+  console.log("from:", from);
+
+  if (requireAuth && !token) {
+    // 目标路由需要登录才能访问，但是用户没有登录
+    console.log("redirect to login");
+    next({ name: "login" });
+  } else if (!requireAuth && token && to.path === "/login") {
+    // 用户已经登录，但是还跳转登录页,直接跳到首页去
+    next({ name: "main" });
+  } else {
+    console.log("next, to:", to);
+    // 其他情况放行
+    next();
   }
-})
+});
 
 
 export default router
