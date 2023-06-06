@@ -1,5 +1,6 @@
 package cn.fighter3.controller;
 
+import cn.fighter3.model.Group;
 import cn.fighter3.model.LoginRequest;
 import cn.fighter3.model.LoginResponse;
 import cn.fighter3.model.User;
@@ -59,5 +60,14 @@ public class UserController implements Serializable {
             return  new ResponseEntity<>(HttpStatus.OK);
         }
         return new ResponseEntity<>(friends,HttpStatus.OK);
+    }
+
+    @GetMapping("/groups")
+    public ResponseEntity<?> getGroups(@RequestHeader(value = "token", required = false) String token) {
+        List<Group> groups=userService.geGroups(token);
+        if (groups==null || groups.size()==0){
+            return  new ResponseEntity<>(HttpStatus.OK);
+        }
+        return new ResponseEntity<>(groups,HttpStatus.OK);
     }
 }

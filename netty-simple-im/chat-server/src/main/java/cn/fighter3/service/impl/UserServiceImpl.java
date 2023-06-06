@@ -3,6 +3,7 @@ package cn.fighter3.service.impl;
 import cn.fighter3.handle.WebSocketChannelHandler;
 import cn.fighter3.manager.ChannelManager;
 import cn.fighter3.manager.UserManager;
+import cn.fighter3.model.Group;
 import cn.fighter3.model.LoginRequest;
 import cn.fighter3.model.LoginResponse;
 import cn.fighter3.model.User;
@@ -62,8 +63,22 @@ public class UserServiceImpl implements UserService {
         if (user==null){
             return null;
         }
+        //获取在线好友
+        List<User> friends=userManager.getFriends(user.getUserId());
+        return friends;
+    }
 
-        return null;
+    @Override
+    public List<Group> geGroups(String token) {
+        //直接写死一个群组
+        Group group=Group.builder()
+                .groupId("1")
+                .name("人才交流群")
+                .avatar("https://i.ibb.co/LtbkY6H/ceeb653ely8hegwd0q62fj20hs0g8wf5.jpg")
+                .build();
+        List<Group> groups=new ArrayList<>();
+        groups.add(group);
+        return groups;
     }
 
 }

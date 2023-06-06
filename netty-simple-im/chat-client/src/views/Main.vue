@@ -1,74 +1,107 @@
 <template>
-  <div class="main">
-    <h1 class="title">即时通讯</h1>
-    <div class="container">
-      <div class="sidebar">
-        <div class="user-profile">
-          <el-image :src="user.avatar" fit="cover" alt="头像" />
+  <!--采用Container 布局容器布局-->
+  <el-container>
+    <!--顶部，标题个人信息等-->
+    <el-header
+      style="height: 80px; background-color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 1px 4px rgba(0,0,0,.1);">
+      <div style="display: flex; align-items: center;">
+        <h1 style="margin: 0;">聊天系统</h1>
+      </div>
+      <!--折叠菜单-->
+      <el-dropdown>
+        <div>
+          <el-avatar :size="36" :src="user.avatar" style="margin-left: 10px;" />
           <span>{{ user.nickname }}</span>
         </div>
-        <el-tabs v-model="activeTab">
-          <el-tab-pane label="好友列表" name="1">
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="handleLogout">退出</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+    </el-header>
+
+    <!--侧边栏，群组列表、好友列表-->
+    <el-aside width="200px">
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="好友列表" name="1" v-show="activeTab === '1'">
+          <el-scrollbar>
+            <ul class="user-list">
+              <li v-for="(friend, index) in friendList" :key="index" @click="handleFriendClick(friend.userId)">
+                <el-row :gutter="30" align="middle">
+                  <el-col :span="4">
+                    <el-avatar :size="size" :src="friend.avatar" />
+                  </el-col>
+                  <el-col :span="16">
+                    <el-link>{{ friend.nickname }}</el-link>
+                  </el-col>
+                </el-row>
+              </li>
+            </ul>
+          </el-scrollbar>
+        </el-tab-pane>
+        <el-tab-pane label="群组列表" name="1" v-show="activeTab === '2'">
+          <el-scrollbar>
+            <ul class="user-list">
+              <li v-for="(group, index) in groupList" :key="index" @click="handleSendGroupMessage(group.groupId)">
+                <div class="info">
+                  <el-avatar :size="size" :src="group.avatar" />
+                  <div class="nickname">{{ group.name }}</div>
+                </div>
+              </li>
+            </ul>
+          </el-scrollbar>
+        </el-tab-pane>
+      </el-tabs>
+    </el-aside>
+    <!--中间部分-->
+    <el-main>
+      <el-tabs v-model="activeChat">
+        <el-tab-pane v-for="(chat, index) in chatList" :key="index" :label="
+          chat.type === 'private' ? chat.user.nickname : chat.group.name
+        " :name="chat.id">
+          <div class="chat-box">
             <el-scrollbar>
-              <ul class="user-list">
-                <li v-for="(friend, index) in friendList" :key="index" @click="handleFriendClick(friend.username)">
+              <ul class="chat-message-list">
+                <li v-for="(message, index) in chat.messageList" :key="index"
+                  :class="{ self: message.senderId === user.id }">
                   <div class="avatar">
-                    <el-image :src="friend.avatar" fit="cover" alt="头像" />
+                    <el-image :src="message.senderAvatar" fit="cover" alt="头像" />
                   </div>
-                  <div class="info">
-                    <div class="nickname">{{ friend.nickname }}</div>
-                    <div class="username">{{ friend.username }}</div>
+                  <div class="message-content">
+                    <div class="sender-info">
+                      <div class="nickname">{{ message.senderNickname }}</div>
+                      <div class="time">{{ message.sendTime }}</div>
+                    </div>
+                    <div class="content">{{ message.content }}</div>
                   </div>
                 </li>
               </ul>
             </el-scrollbar>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-      <div class="content">
-        <el-tabs v-model="activeChat">
-          <el-tab-pane v-for="(chat, index) in chatList" :key="index" :label="
-            chat.type === 'private' ? chat.user.nickname : chat.group.name
-          " :name="chat.id">
-            <div class="chat-box">
-              <el-scrollbar>
-                <ul class="chat-message-list">
-                  <li v-for="(message, index) in chat.messageList" :key="index"
-                    :class="{ self: message.senderId === user.id }">
-                    <div class="avatar">
-                      <el-image :src="message.senderAvatar" fit="cover" alt="头像" />
-                    </div>
-                    <div class="message-content">
-                      <div class="sender-info">
-                        <div class="nickname">{{ message.senderNickname }}</div>
-                        <div class="time">{{ message.sendTime }}</div>
-                      </div>
-                      <div class="content">{{ message.content }}</div>
-                    </div>
-                  </li>
-                </ul>
-              </el-scrollbar>
-              <div class="chat-input-box">
-                <el-input v-model="chatInput" placeholder="请输入消息" clearable></el-input>
-                <el-button class="send-btn" type="primary" @click="handleSend(chat)">发送</el-button>
-              </div>
+            <div class="chat-input-box">
+              <el-input v-model="chatInput" placeholder="请输入消息" clearable></el-input>
+              <el-button class="send-btn" type="primary" @click="handleSend(chat)">发送</el-button>
             </div>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-    </div>
-  </div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </el-main>
+  </el-container>
 </template>
 
 <script>
 import axios from "axios";
+
 export default {
   name: "MainView",
+
+
   data() {
     return {
       user: JSON.parse(localStorage.getItem("user")),
       friendList: [],
-      //groupList: [],
+      groupList: [],
       chatList: [],
       activeTab: "1",
       activeChat: "",
@@ -81,7 +114,7 @@ export default {
   },
   mounted() {
     this.friendListRef = this.$refs.friendListRef;
-    //this.groupListRef = this.$refs.groupListRef;
+    this.groupListRef = this.$refs.groupListRef;
     this.chatListRef = this.$refs.chatListRef;
     this.getFriendList();
     //this.getGroupList();
@@ -150,7 +183,10 @@ export default {
           this.friendList = response.data;
           if (response.data) {
             this.$nextTick(() => {
-              this.friendListRef.update();
+              this.friendListRef = this.$refs.friendList;
+              if (this.friendListRef) {
+                this.friendListRef.update();
+              }
             });
           }
 
@@ -162,11 +198,18 @@ export default {
     // 获取群组列表
     getGroupList() {
       axios
-        .get("/api/groups")
+        .get("/im/user/groups", {
+          headers: {
+            "token": localStorage.getItem("token")
+          }
+        })
         .then((response) => {
           this.groupList = response.data;
           this.$nextTick(() => {
-            this.groupListRef.update();
+            this.groupListRef = this.$refs.groupList;
+            if (this.groupListRef) {
+              this.groupListRef.update();
+            }
           });
         })
         .catch((error) => {
@@ -200,6 +243,51 @@ export default {
         });
       }
     },
+    //处理群组消息
+    handleSendGroupMessage(chat) {
+      const content = this.chatInput.trim();
+      if (content) {
+        const data = { content, groupId: chat.group.id };
+        const token = localStorage.getItem("token");
+        this.socket.emit("groupMessage", { token, data });
+
+        chat.messageList.push({
+          senderId: this.user.id,
+          senderNickname: this.user.nickname,
+          senderAvatar: this.user.avatar,
+          content,
+          sendTime: new Date().toLocaleString(),
+        });
+        this.chatInput = "";
+        this.$nextTick(() => {
+          this.chatListRef.update();
+        });
+      }
+    },
+  },
+  //退出登录
+  handleLogout() {
+    axios
+      .post("/im/user/logout", {
+        headers: {
+          "token": localStorage.getItem("token")
+        }
+      })
+      .then(() => {
+        //清除本地token和user，跳转到登录页面
+        // 清除本地存储的用户信息和 token
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+
+        //断开socket连接
+        this.socket.disconnect();
+
+        //跳转到登录页面
+        this.$router.push('/login');
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   },
 };
 </script>
@@ -288,14 +376,18 @@ export default {
 
 .info {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
   justify-content: center;
+  margin-right: 10px;
+  vertical-align: middle;
 }
 
 .nickname {
   font-size: 16px;
   font-weight: bold;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .username {

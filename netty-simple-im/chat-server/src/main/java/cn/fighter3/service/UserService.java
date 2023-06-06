@@ -1,5 +1,6 @@
 package cn.fighter3.service;
 
+import cn.fighter3.model.Group;
 import cn.fighter3.model.LoginRequest;
 import cn.fighter3.model.LoginResponse;
 import cn.fighter3.model.User;
@@ -30,4 +31,9 @@ public interface UserService {
      * 获取好友列表
      */
     List<User> getFriends(String token);
+
+    /**
+     * 获取用户群组
+     */
+    List<Group> geGroups(String token);
 }
